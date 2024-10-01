@@ -23,10 +23,13 @@ Create Sea Surface Temperature Anomaly Maps of different SST data products.  Ano
 
 
 ## Authors and acknowledgment
-Project created by Dr Bee Berx. 
+Project and code created by Dr Bee Berx. 
 
 ## License
 Published under Open Government License. 
+
+## Issues/Bugs
+If you come across any bugs or mistakes in the code, please raise a ticket/pull request to address these. 
 
 ## Project status
 Under development. 
