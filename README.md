@@ -13,6 +13,7 @@ Create Sea Surface Temperature Anomaly Maps of different SST data products.  Ano
 - All necessary functions and files, beyond those included in Matlab as standard, are part of the repository. 
 - The repository includes reproduced copies of cbrewer functions and of the coastline shared under m_map. 
 - Open script in Matlab, make necessary edits to point to locations of your data files, time period, latitudinal and longitudinal region of interest. 
+- Run scripts.  Figures are saved in sub-folders of main repository location.  
 
 
 ## Data Dependencies
