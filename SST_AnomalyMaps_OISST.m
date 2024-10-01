@@ -9,13 +9,14 @@
 %  Author - Bee Berx                                                      %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 clear all;close all;clc
+addpath('.\cbrewer')
 
 %% USER DEFINED VARIABLES 
 % set region of interest, data folder location and climatology ref period
 lon_extent = [-80 50];
 lat_extent = [0 90];
 
-OISST_datafolder = [getenv('isilon'),'\Data_External\NOAA_oisst.v2.highres\'];
+OISST_datafolder = ['I:\Data_External\NOAA_oisst.v2.highres\'];
 
 clim_ref_period = [1991 2020];
 
@@ -385,4 +386,26 @@ function fun_savepngL(figh,filename)
 set(figh,'paperorientation','landscape','papertype','a4','paperpositionmode','auto',...
     'paperunits','centimeters','paperposition',[0.6 0.6 28.4 19.7])
 print(figh, '-dpng', '-r300', filename)
+end
+
+
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function bplot_coastGLOB(plotspec)
+%
+% BPLOT_COASTGLOB
+%
+% Plots WORLD coastline on current figure.  If no input
+% arguments, the function will plot the coastline as a black line.
+%
+% Coastline file from m_map toolbox - https://www-old.eoas.ubc.ca/~rich/map.html
+
+if nargin<1
+   plotspec = '-k'; 
+end
+
+load(['.\m_coasts.mat'])
+
+figure(gcf)
+hold on
+plot(ncst(:,1),ncst(:,2),plotspec)
 end
