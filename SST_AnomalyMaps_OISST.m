@@ -355,6 +355,10 @@ for iyear=1:nyrs
     icemask = abs(isnan(ice_in));
     icemask(icemask==0)=NaN;
 
+    clear ice_in;
+
+    sst_in_masked = sst_in.* icemask .*repmat(lsmask,1,1,size(sst_in,3));
+
     time_mon = unique(time_orig(:,[1:2]),"rows");
 
     for nn=1:size(time_mon,1)
@@ -362,11 +366,10 @@ for iyear=1:nyrs
             find(time_orig(:,2)==time_mon(nn,2)));
         if length(idx)~=eomday(time_mon(nn,1),time_mon(nn,2));continue;end
         [~,~,idx2] = intersect(time_mon(nn,1:2),SST_time(:,1:2),'rows');
-        SST(:,:,idx2) = mean(sst_in(:,:,idx).* icemask(:,:,idx) ... 
-            .*repmat(lsmask,1,1,length(idx)),3);
+        SST(:,:,idx2) = mean(sst_in_masked(:,:,idx),3);
     end
 
-    clear ice_in icemask time_mon sst_in
+    clear ice_in icemask time_mon sst_in sst_in_masked
 end
 
 SST_time=datenum(SST_time);
