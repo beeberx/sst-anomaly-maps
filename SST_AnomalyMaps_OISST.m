@@ -47,6 +47,7 @@ for mm=1:12;
         repmat(OIClimSdev(:,:,mm),1,1,length(idxOI));
 end
 
+%% Select year or year range to plot
 ButtonName = questdlg('Process all years or specific year?', ...
     'Years Question', ...
     'All', 'Range', 'Specific', 'Specific');
@@ -73,6 +74,7 @@ switch ButtonName
 end % switch
 clear tim_chck ButtonName
 
+%% Work through selected years and make plots
 for yy=1:length(selectyear)
     OI_Anom_select = OI_Anom(:,:,OISST_tvec(:,1)==selectyear(yy));
     OI_NormAnom_select = OI_NormAnom(:,:,OISST_tvec(:,1)==selectyear(yy));
@@ -316,6 +318,7 @@ SST_time = SST_time(idxValid,:);
 for iyear=1:nyrs
     if ~ismember(Years(iyear),SST_time(:,1));continue;end
     fname = {[NOAA_OISSTDir 'sst.day.mean.' num2str(Years(iyear)) '.nc']};
+    iname = {[NOAA_OISSTDir 'icec.day.mean.' num2str(Years(iyear)) '.nc']};
     if iyear==1
         lat = ncread(fname{1},'lat');
         lon = ncread(fname{1},'lon');
@@ -344,6 +347,14 @@ for iyear=1:nyrs
     sst_in = double(sst_in);
     sst_in(sst_in==-9.969209968386869e+36)=NaN;
 
+    ice_in = cat(1,ncread(iname{1},'icec',[ilon1(1),ilat1(1),1],[length(ilon1),length(ilat1),Inf]),...
+        ncread(iname{1},'icec',[ilon2(1),ilat1(1),1],[length(ilon2),length(ilat1),Inf]));
+    ice_in = double(ice_in);
+    ice_in(ice_in==-9.969209968386869e+36)=NaN;
+
+    icemask = abs(isnan(ice_in));
+    icemask(icemask==0)=NaN;
+
     time_mon = unique(time_orig(:,[1:2]),"rows");
 
     for nn=1:size(time_mon,1)
@@ -351,8 +362,11 @@ for iyear=1:nyrs
             find(time_orig(:,2)==time_mon(nn,2)));
         if length(idx)~=eomday(time_mon(nn,1),time_mon(nn,2));continue;end
         [~,~,idx2] = intersect(time_mon(nn,1:2),SST_time(:,1:2),'rows');
-        SST(:,:,idx2) = mean(sst_in(:,:,idx).*repmat(lsmask,1,1,length(idx)),3);
+        SST(:,:,idx2) = mean(sst_in(:,:,idx).* icemask(:,:,idx) ... 
+            .*repmat(lsmask,1,1,length(idx)),3);
     end
+
+    clear ice_in icemask time_mon sst_in
 end
 
 SST_time=datenum(SST_time);
