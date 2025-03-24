@@ -85,10 +85,11 @@ for yy=1:length(selectyear)
     cmap = cat(1,flipud(cbrewer('seq','PuBu',10)),cbrewer('seq','YlOrRd',10));
     cmap(cmap>1)=1;cmap(cmap<0)=0;
 
-    tmp= cbrewer('div','PiYG',3);
+        tmp= cbrewer('div','PiYG',3);
     amap = cat(1,flipud(cbrewer('seq','Blues',6)),tmp(2,:),tmp(2,:),cbrewer('seq','Reds',6));
     amap(amap>1)=1;amap(amap<0)=0;
     clear tmp
+
 
     pos12 = [0.02 0.68 0.225 0.3;0.255 0.68 0.225 0.3;0.49 0.68 0.225 0.3;0.725 0.68 0.225 0.3;...
         0.02 0.36 0.225 0.3;0.255 0.36 0.225 0.3;0.49 0.36 0.225 0.3;0.725 0.36 0.225 0.3;...
@@ -132,9 +133,11 @@ for yy=1:length(selectyear)
         if ~ismember(mm,[1,5,9])
             set(ax,'yticklabel',[])
         end
-        text(max(lon2plot(:))-2,min(lat2plot(:))+0.5,datestr(datenum(selectyear(yy),mm,1),'mmm-yy'),'VerticalAlignment','middle','HorizontalAlignment','center')
+        text(20,20,datestr(datenum(selectyear(yy),mm,1),'mmm-yy'),'VerticalAlignment','middle','HorizontalAlignment','center')
+        % title(datestr(datenum(2023,mm,1),'mmm-yy'))
+        %
     end
-    fun_savepngL(gcf,['.\OISST_AnomSST\SST_Maps_OISST_AnomSST_',num2str(selectyear(yy)),'_ROI.png'])
+    fun_savepngL(gcf,['.\OISST_AnomSST\SST_Maps_OISST_AnomSST_',num2str(selectyear(yy)),'_NAtl.png'])
 
     %% Standardised ANOM SST OI SST relative OISST
     close all;
@@ -173,11 +176,98 @@ for yy=1:length(selectyear)
         if ~ismember(mm,[1,5,9])
             set(ax,'yticklabel',[])
         end
-        text(max(lon2plot(:))-2,min(lat2plot(:))+0.5,datestr(datenum(selectyear(yy),mm,1),'mmm-yy'),'VerticalAlignment','middle','HorizontalAlignment','center')
+        text(20,20,datestr(datenum(selectyear(yy),mm,1),'mmm-yy'),'VerticalAlignment','middle','HorizontalAlignment','center')
+        % title(datestr(datenum(2023,mm,1),'mmm-yy'))
+        %
     end
-    fun_savepngL(gcf,['.\OISST_NormAnomSST\SST_Maps_OISST_NormAnomSST_',num2str(selectyear(yy)),'_ROI.png'])
+    fun_savepngL(gcf,['.\OISST_NormAnomSST\SST_Maps_OISST_NormAnomSST_',num2str(selectyear(yy)),'_NAtl.png'])
 
 
+    %% ANOM SST OI SST relative OISST  -SPNA only
+    close all;
+    figure(1)
+
+    for mm=1:12
+        [tim_chck]=intersect(OISST_tvec(:,1:2),[selectyear(yy),mm],'rows');
+        if isempty(tim_chck);clear tim_chck;continue;else;clear tim_chck;end;
+
+        subplot(3,4,mm)
+
+        lon2plot = [min(OISST_lon(:))-0.025;OISST_lon+0.025];
+        lat2plot = [min(OISST_lat(:))-0.025;OISST_lat+0.025];
+        heat2plot = OI_Anom_select(:,:,mm);
+
+        heat2plot = cat(1,heat2plot,NaN.*heat2plot(1,:));
+        heat2plot = cat(2,heat2plot,heat2plot(:,1).*NaN);
+        dlon = ceil(double(max(lon2plot)-min(lon2plot))/5);
+        dlat = ceil(double(max(lat2plot)-min(lat2plot))/5);
+
+        pcolor(lon2plot,lat2plot,heat2plot');shading flat;
+        ax = gca;
+        caxis([-2.5 2.5])
+        colormap(cmap(:,:))
+        bplot_coastGLOB
+        set(ax,'position',pos12(mm,:));
+        if ismember(mm,[1])
+            [hc]=colorbar(ax,'eastoutside');%([.05 .9],.05,CS,CH,'endpiece','no','axfrac',.025,'levels','set','fontsize',10,'fontname','arial');
+            set(hc,'ytick',[-2.5:0.5:2.5],'yticklabel',sprintf('% -3.1f\n',[-2.5:0.5:2.5]'))%,'yticklabelrotation',0,'ticklength',[0.01     0.05])
+            title(hc,'^o C','fontsize',10,'fontname','arial')
+            set(hc,'position',[0.965 0.06 0.01 0.875])
+        end
+        if ~ismember(mm,[9,10,11,12])
+            set(ax,'xticklabel',[])
+        end
+        if ~ismember(mm,[1,5,9])
+            set(ax,'yticklabel',[])
+        end
+        set(ax,'xlim',[-50 15],'ylim',[30 65])
+        text(5,32.5,datestr(datenum(selectyear(yy),mm,1),'mmm-yy'),'VerticalAlignment','middle','HorizontalAlignment','center')
+    end
+    fun_savepngL(gcf,['.\OISST_AnomSST\SST_Maps_OISST_AnomSST_',num2str(selectyear(yy)),'_SPNA.png'])
+
+    %% ANOM SST OI SST relative OISST  -SPNA only
+    close all;
+    figure(1)
+
+    for mm=1:12
+        [tim_chck]=intersect(OISST_tvec(:,1:2),[selectyear(yy),mm],'rows');
+        if isempty(tim_chck);clear tim_chck;continue;else;clear tim_chck;end;
+
+        subplot(3,4,mm)
+
+        lon2plot = [min(OISST_lon(:))-0.025;OISST_lon+0.025];
+        lat2plot = [min(OISST_lat(:))-0.025;OISST_lat+0.025];
+        heat2plot = OI_NormAnom_select(:,:,mm);
+
+        heat2plot = cat(1,heat2plot,NaN.*heat2plot(1,:));
+        heat2plot = cat(2,heat2plot,heat2plot(:,1).*NaN);
+        dlon = ceil(double(max(lon2plot)-min(lon2plot))/5);
+        dlat = ceil(double(max(lat2plot)-min(lat2plot))/5);
+
+        pcolor(lon2plot,lat2plot,heat2plot');shading flat;
+        ax = gca;
+
+        caxis([-3.5 3.5])
+        colormap(amap(:,:))
+        bplot_coastGLOB
+        set(ax,'position',pos12(mm,:));
+        if ismember(mm,[1])
+            [hc]=colorbar(ax,'eastoutside');%([.05 .9],.05,CS,CH,'endpiece','no','axfrac',.025,'levels','set','fontsize',10,'fontname','arial');
+            set(hc,'ytick',[-3.5:0.5:3.5],'yticklabel',sprintf('% -3.1f\n',[-3.5:0.5:3.5]'))%,'yticklabelrotation',0,'ticklength',[0.01     0.05])
+            title(hc,{'St. Dev.','Units'},'fontsize',10,'fontname','arial')
+            set(hc,'position',[0.965 0.06 0.01 0.875])
+        end
+
+        if ~ismember(mm,[9,10,11,12])
+            set(ax,'xticklabel',[])
+        end
+        if ~ismember(mm,[1,5,9])
+            set(ax,'yticklabel',[])
+        end
+        set(ax,'xlim',[-50 15],'ylim',[30 65])
+        text(5,32.5,datestr(datenum(selectyear(yy),mm,1),'mmm-yy'),'VerticalAlignment','middle','HorizontalAlignment','center')
+    end
+    fun_savepngL(gcf,['.\OISST_NormAnomSST\SST_Maps_OISST_NormAnomSST_',num2str(selectyear(yy)),'_SPNA.png'])
 end
 return
 
