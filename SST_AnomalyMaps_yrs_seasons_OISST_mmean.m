@@ -13,10 +13,10 @@ addpath('.\cbrewer')
 
 %% USER DEFINED VARIABLES
 % set region of interest, data folder location and climatology ref period
-lon_extent = [-20,15];
-lat_extent = [45,65];
-%lon_extent = [-80 50];
-%lat_extent = [0 90];
+%lon_extent = [-20,15];
+%lat_extent = [45,65];
+lon_extent = [-80 50];
+lat_extent = [0 90];
 
 OISST_datafolder = ['I:\Data_External\NOAA_oisst.v2.highres\'];
 
@@ -78,9 +78,8 @@ clear tim_chck ButtonName
 
 %% Work through selected years and make plots
 for yy=1:length(selectyear)
-
     yidx = find(OISST_tvec(:,1)==selectyear(yy))-1;
-
+    
     if length(yidx)~=12;disp(['insufficient months in year ' sprintf('%4d',selectyear(yy))]);continue;end
 
     OI_Anom_select = OI_Anom(:,:,yidx);
@@ -198,7 +197,7 @@ for yy=1:length(selectyear)
         end
         text(max(lon2plot(:))-7,min(lat2plot(:))+1,OI_toPlot_Titles{ss},'VerticalAlignment','middle','HorizontalAlignment','center')
     end
-    fun_savepngL(gcf,['.\OISST_AnomSST\SST_Maps_OISST_NormAnomSST_',num2str(selectyear(yy)),'_YearSeasons.png'])
+    fun_savepngL(gcf,['.\OISST_NormAnomSST\SST_Maps_OISST_NormAnomSST_',num2str(selectyear(yy)),'_YearSeasons.png'])
 
 end
 return
@@ -245,77 +244,54 @@ tim_chck = datevec(floor(now));
 Years=1981:tim_chck(1);clear tim_chck
 nyrs=length(Years);
 
-%SST_time = [datenum(1981,1,1):1:datenum(2024,12,31)]';
-SST_time = [sort(repmat(Years',12,1)),repmat([1:12]',nyrs,1),repmat(15,nyrs*12,1)];
 
-idxValid = intersect(find(datenum(SST_time)>=time_choice(1)),find(datenum(SST_time)<=time_choice(2)));
+fname = {[NOAA_OISSTDir 'sst.mon.mean.nc']};
+iname = {[NOAA_OISSTDir 'icec.mon.mean.nc']};
 
-SST_time = SST_time(idxValid,:);
+lat = ncread(fname{1},'lat');
+lon = ncread(fname{1},'lon');
+lon(lon>180)=lon(lon>180)-360;
+ilat1 = intersect(find(lat>=lat_choice(1)),find(lat<=lat_choice(2)));
+ilon2 = intersect(find(lon>=0),find(lon<=lon_choice(2)));
+ilon1 = intersect(find(lon>=lon_choice(1)),find(lon<=0));
 
-% Loop through data year by year
-for iyear=1:nyrs
-    if ~ismember(Years(iyear),SST_time(:,1));continue;end
-    fname = {[NOAA_OISSTDir 'sst.day.mean.' num2str(Years(iyear)) '.nc']};
-    iname = {[NOAA_OISSTDir 'icec.day.mean.' num2str(Years(iyear)) '.nc']};
-    if iyear==1
-        lat = ncread(fname{1},'lat');
-        lon = ncread(fname{1},'lon');
-        lon(lon>180)=lon(lon>180)-360;
-        ilat1 = intersect(find(lat>=lat_choice(1)),find(lat<=lat_choice(2)));
-        ilon2 = intersect(find(lon>=0),find(lon<=lon_choice(2)));
-        ilon1 = intersect(find(lon>=lon_choice(1)),find(lon<=0));
+sellon1  = double(ncread(fname{1},'lon',[ilon1(1)],[length(ilon1)]));
+sellon2  = double(ncread(fname{1},'lon',[ilon2(1)],[length(ilon2)]));
+sellon = cat(1,sellon1,sellon2);
+sellon(sellon>180)=sellon(sellon>180)-360;
 
-        sellon1  = double(ncread(fname{1},'lon',[ilon1(1)],[length(ilon1)]));
-        sellon2  = double(ncread(fname{1},'lon',[ilon2(1)],[length(ilon2)]));
-        sellon = cat(1,sellon1,sellon2);
-        sellon(sellon>180)=sellon(sellon>180)-360;
+sellat  = double(ncread(fname{1},'lat',[ilat1(1)],[length(ilat1)]));
+lsmask = cat(1,ncread([NOAA_OISSTDir,'lsmask.oisst.nc'],'lsmask',[ilon1(1),ilat1(1),1],[length(ilon1),length(ilat1),1]),...
+    ncread([NOAA_OISSTDir,'lsmask.oisst.nc'],'lsmask',[ilon2(1),ilat1(1),1],[length(ilon2),length(ilat1),1]));
+lsmask(lsmask==0) = NaN;lsmask = double(lsmask);
 
-        sellat  = double(ncread(fname{1},'lat',[ilat1(1)],[length(ilat1)]));
-        lsmask = cat(1,ncread([NOAA_OISSTDir,'lsmask.oisst.nc'],'lsmask',[ilon1(1),ilat1(1),1],[length(ilon1),length(ilat1),1]),...
-            ncread([NOAA_OISSTDir,'lsmask.oisst.nc'],'lsmask',[ilon2(1),ilat1(1),1],[length(ilon2),length(ilat1),1]));
-        lsmask(lsmask==0) = NaN;lsmask = double(lsmask);
+time_orig = datevec(datenum(1800,1,1)+ncread(fname{1},'time'));
 
-        SST = NaN.*zeros(size(lsmask,1),size(lsmask,2),size(SST_time,1));
+sst_in = cat(1,ncread(fname{1},'sst',[ilon1(1),ilat1(1),1],[length(ilon1),length(ilat1),Inf]),...
+    ncread(fname{1},'sst',[ilon2(1),ilat1(1),1],[length(ilon2),length(ilat1),Inf]));
+sst_in = double(sst_in);
+sst_in(sst_in==-9.969209968386869e+36)=NaN;
 
-    end
-    time_orig = datevec(datenum(1800,1,1)+ncread(fname{1},'time'));
+ice_in = cat(1,ncread(iname{1},'icec',[ilon1(1),ilat1(1),1],[length(ilon1),length(ilat1),Inf]),...
+    ncread(iname{1},'icec',[ilon2(1),ilat1(1),1],[length(ilon2),length(ilat1),Inf]));
+ice_in = double(ice_in);
+ice_in(ice_in==-9.969209968386869e+36)=NaN;
 
-    sst_in = cat(1,ncread(fname{1},'sst',[ilon1(1),ilat1(1),1],[length(ilon1),length(ilat1),Inf]),...
-        ncread(fname{1},'sst',[ilon2(1),ilat1(1),1],[length(ilon2),length(ilat1),Inf]));
-    sst_in = double(sst_in);
-    sst_in(sst_in==-9.969209968386869e+36)=NaN;
+icemask = abs(isnan(ice_in));
+icemask(icemask==0)=NaN;
 
-    ice_in = cat(1,ncread(iname{1},'icec',[ilon1(1),ilat1(1),1],[length(ilon1),length(ilat1),Inf]),...
-        ncread(iname{1},'icec',[ilon2(1),ilat1(1),1],[length(ilon2),length(ilat1),Inf]));
-    ice_in = double(ice_in);
-    ice_in(ice_in==-9.969209968386869e+36)=NaN;
+clear ice_in;
 
-    icemask = abs(isnan(ice_in));
-    icemask(icemask==0)=NaN;
+sst_in_masked = sst_in.* icemask .*repmat(lsmask,1,1,size(sst_in,3));
 
-    clear ice_in;
+idxValid = intersect(find(datenum(time_orig)>=time_choice(1)),find(datenum(time_orig)<=time_choice(2)));
 
-    sst_in_masked = sst_in.* icemask .*repmat(lsmask,1,1,size(sst_in,3));
+SST_time = datenum(time_orig(idxValid,:));
+SST = sst_in_masked(:,:,idxValid);
 
-    time_mon = unique(time_orig(:,[1:2]),"rows");
+clear ice_in icemask time_mon sst_in sst_in_masked Tout Tin
 
-    for nn=1:size(time_mon,1)
-        idx = intersect(find(time_orig(:,1)==time_mon(nn,1)),...
-            find(time_orig(:,2)==time_mon(nn,2)));
-        if length(idx)~=eomday(time_mon(nn,1),time_mon(nn,2));continue;end
-        [~,~,idx2] = intersect(time_mon(nn,1:2),SST_time(:,1:2),'rows');
-        tmp_mean = mean(sst_in_masked(:,:,idx),3,'omitnan');
-        tmp_mask = sum(~isnan(sst_in_masked(:,:,idx)),3);
-        tmp_mask(tmp_mask<0.9*length(idx))=NaN;
-        tmp_mask(~isnan(tmp_mask))=1;
-        SST(:,:,idx2) = tmp_mean.*tmp_mask;
-        clear tmp_mean tmp_mask
-    end
 
-    clear ice_in icemask time_mon sst_in sst_in_masked
-end
-
-SST_time=datenum(SST_time);
 end
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
